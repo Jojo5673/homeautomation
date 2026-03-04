@@ -3,17 +3,19 @@
 // IMPORT ALL REQUIRED LIBRARIES
 
 #include <math.h>
+#include <ArduinoJson.h>
+#include <NewPing.h>
    
 //**********ENTER IP ADDRESS OF SERVER******************//
 
 #define HOST_IP     "localhost"       // REPLACE WITH IP ADDRESS OF SERVER ( IP ADDRESS OF COMPUTER THE BACKEND IS RUNNING ON) 
 #define HOST_PORT   "8080"            // REPLACE WITH SERVER PORT (BACKEND FLASK API PORT)
 #define route       "api/update"      // LEAVE UNCHANGED 
-#define idNumber    "620012345"       // REPLACE WITH YOUR ID NUMBER 
+#define idNumber    "620172690"       // REPLACE WITH YOUR ID NUMBER 
 
 // WIFI CREDENTIALS
-#define SSID        "YOUR WIFI"      // "REPLACE WITH YOUR WIFI's SSID"   
-#define password    "YOUR PASSWORD"  // "REPLACE WITH YOUR WiFi's PASSWORD" 
+#define SSID        "MonaConnect"      // "REPLACE WITH YOUR WIFI's SSID"   
+#define password    ""  // "REPLACE WITH YOUR WiFi's PASSWORD" 
 
 #define stay        100
  
@@ -24,13 +26,21 @@
 #define espTX         11
 #define espTimeout_ms 300
 
+#define trigPin 3
+#define echoPin 2
+#define diameter 61.5
+#define depth 77.763
  
  
 /* Declare your functions below */
- 
- 
+
+void espInit();
+void espSend(char command[]);
+void espUpdate(char mssg[]);
+double calcHeight();
 
 SoftwareSerial esp(espRX, espTX); 
+NewPing sonar(trigPin, echoPin, 200); 
  
 
 void setup(){
@@ -38,18 +48,32 @@ void setup(){
   Serial.begin(115200); 
   // Configure GPIO pins here
 
- 
-
   espInit();  
- 
 }
 
 void loop(){ 
    
   // send updates with schema ‘{"id": "student_id", "type": "ultrasonic", "radar": 0, "waterheight": 0, "reserve": 0, "percentage": 0}’
+  double distance = sonar.ping_in() - 16.737;
+  Serial.println(distance);
+  double height = depth - distance;
+  double radius = diameter/2.0;
+  double volume = (M_PI * pow(radius, 2) * height) / 231.0;
+  double percent = (height/depth) * 100;
 
+  StaticJsonDocument<290> doc;
+  char json_data[290] = {0};
 
+  doc["id"] = idNumber;
+  doc["type"] = "ultrasonic";
+  doc["radar"] = distance;
+  doc["waterheight"] = height;
+  doc["reserve"] = volume;
+  doc["percentage"] = percent;
 
+  serializeJson(doc, json_data);
+  Serial.println(json_data);
+  espUpdate(json_data);
   delay(1000);  
 }
 
