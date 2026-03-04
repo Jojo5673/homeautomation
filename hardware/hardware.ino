@@ -60,8 +60,8 @@ static const char* mqtt_server   = "www.yanacreations.com";         // Broker IP
 static uint16_t mqtt_port        = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid       = "CWC-1455723"; // Add your Wi-Fi ssid
-const char* password   = "g5dnTphrhqpw"; // Add your Wi-Fi password 
+const char* ssid       = "MonaConnect"; // Add your Wi-Fi ssid
+const char* password   = ""; // Add your Wi-Fi password 
 
 // TASK HANDLES 
 TaskHandle_t xMQTT_Connect          = NULL; 
@@ -327,7 +327,7 @@ void checkPasscode(void){
       Serial.println("Checking password");
       
       // 1. REPLACE LOCALHOST IN THE STRING BELOW WITH THE IP ADDRESS OF THE COMPUTER THAT YOUR BACKEND IS RUNNING ON
-      http.begin(client, "http://localhost:8080/api/check/combination"); // Your Domain name with URL path or IP address with path 
+      http.begin(client, "http://172.16.192.204:8080/api/check/combination"); // Your Domain name with URL path or IP address with path 
  
       
       http.addHeader("Content-Type", "application/x-www-form-urlencoded"); // Specify content-type header      
@@ -364,7 +364,8 @@ void checkPasscode(void){
           lockState = false;
           showLockState();
         } 
-      }     
+      }
+      Serial.println(lockState);     
         
       // Free resources
       http.end();
@@ -380,13 +381,14 @@ void showLockState(void){
     // Toggles the open and close lock images on the screen based on the lockState variable  
     tft.setFont(&FreeSansBold9pt7b);  
     tft.setTextSize(1);
+    tft.fillRect(50, 160, 240, 80, ILI9341_GREENYELLOW);
     
 
     if(lockState == true){
       tft.drawRGBBitmap(68,10, lockopen, 104, 97); 
       tft.setCursor(50, 200);  
       tft.setCursor(50, 200);  
-      tft.setTextColor(ILI9341_GREEN); 
+      tft.setTextColor(ILI9341_DARKGREEN); 
       tft.printf("Access Granted");
       
     }

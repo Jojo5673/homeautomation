@@ -29,6 +29,7 @@ def _valid_passcode(passcode):
 # 1. CREATE ROUTE FOR '/api/set/combination'
 @app.route('/api/set/combination', methods=['POST'])
 def set_combination():
+    
     if request.method == 'POST':
         try:
             passcode = (request.json.get("passcode") or "").strip()
