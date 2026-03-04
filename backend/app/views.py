@@ -18,30 +18,100 @@ from os.path import join, exists
 from time import time, ctime
 from math import floor
  
-
-
-
 #####################################
 #   Routing for your application    #
 #####################################
 
-
 # 1. CREATE ROUTE FOR '/api/set/combination'
+@app.route('/api/set/combination', methods=['POST'])
+def set_combination():
+    if request.method == 'POST':
+        try:
+            form = request.form
+            passcode = (form.get("passcode") or "").strip()
+            print(passcode)
+            passcodeInt = int(passcode)
+            
+            if  len(passcode) == 4 and type(passcodeInt) == int :
+                return jsonify({"status": "failed", "data": "Invalid passcode format"})
+            
+            success = mongo.update_passcode(passcode)   
+            if success:
+                return jsonify({"status": "complete", "data": "complete"})
+            else:
+                return jsonify({"status": "failed", "data": "failed"})
+        except Exception as e:
+            print(f"set_combination error: f{str(e)}") 
     
 # 2. CREATE ROUTE FOR '/api/check/combination'
+@app.route('/api/check/combination', methods=['POST'])
+def check_combination():
+# Retrieve the passcode from the 'code' collection in the database
+    passcode = request.form.get('passcode')
+
+    if request.method == "POST":
+        try:
+            count = mongo.check_code_count(passcode)
+            if count > 0:
+                return jsonify({"status": "complete", "data": "complete"})
+        except Exception as e:
+            msg = str(e)
+            print(f"check_combination Error: {msg}")
+        return jsonify({"status": "failed", "data": "failed"})
 
 # 3. CREATE ROUTE FOR '/api/update'
+@app.route('/api/update', methods=['POST'])
+def update_data():
+    '''Updates the 'radar' collection'''
+    if request.method == "POST":
+        try:
+            jsonDoc= request.get_json()
+           
+            timestamp = datetime.now().timestamp()
+            timestamp = floor(timestamp)
+            jsonDoc['timestamp'] = timestamp
+
+            Mqtt.publish("620172690",dumps(jsonDoc))
+            Mqtt.publish("620172690_pub",dumps(jsonDoc))
+            Mqtt.publish("620172690_sub",dumps(jsonDoc))
+
+            print(f"MQTT: {jsonDoc}")
+
+            item = mongo.insert_radar_data(jsonDoc)
+            if item:
+                return jsonify({"status": "complete", "data": "complete"})
+        except Exception as e:
+            msg = str(e)
+            print(f"update Error: {msg}")
+        return jsonify({"status": "failed", "data": "failed"})
    
 # 4. CREATE ROUTE FOR '/api/reserve/<start>/<end>'
+@app.route('/api/reserve/<start>/<end>', methods=['GET']) 
+def getAllRange(start,end):   
+    start = int(start)
+    end = int(end)
+
+    if request.method == "GET":
+        try:
+            item = mongo.get_radar_data(start,end)
+            data= list(item)
+            if data:
+                return jsonify({"status":"complete","data": data})
+            
+        except Exception as e:
+            print(f"getAllRange error: f{str(e)}") 
+        return jsonify({"status":"not found","data":[]})
 
 # 5. CREATE ROUTE FOR '/api/avg/<start>/<end>'
-
-
-   
-
-
-
-
+@app.route('/api/avg/<start>/<end>', methods=['GET'])
+def calculate_avg_reserve(start, end):
+     if request.method == 'GET':
+        try:
+            average = mongo.aggregate_avg_reserve(start, end)
+            if average:
+                return jsonify({"status": "complete", "data": average})
+        except Exception as e:
+            return jsonify({"status": "failed", "data": 0})
 
 
 @app.route('/api/file/get/<filename>', methods=['GET']) 

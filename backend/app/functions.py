@@ -6,6 +6,9 @@
 #################################################################################################################################################
 
 
+from itertools import count
+
+
 class DB:
 
     def __init__(self,Config):
@@ -52,21 +55,64 @@ class DB:
     ####################
     
     # 1. CREATE FUNCTION TO INSERT DATA IN TO THE RADAR COLLECTION
-
+    def insert_radar_data(self, data):
+        try:
+            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result = remotedb.ELET2415.radar.insert_one(data)
+        except Exception as e:
+            msg = str(e)
+            print("Failed to insert", msg)    
+        else:
+            return result
     
     # 2. CREATE FUNCTION TO RETRIEVE ALL DOCUMENTS FROM RADAR COLLECT BETWEEN SPECIFIED DATE RANGE. MUST RETURN A LIST OF DOCUMENTS
-
+    def get_radar_data(self,start, end):
+        try:
+            start = int(start)
+            end = int(end)
+            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result = remotedb.ELET2415.radar.find({'$and': [{'timestamp': {'$gte': start, '$lte': end}}, {'reserve': {'$gte': 0}}]}, {'_id': False, 'timestamp': True, 'reserve': True, 'waterheight': True})
+        except Exception as e:
+            msg = str(e)
+            print("Failed to query: ", msg)
+        finally:
+            return result
 
     # 3. CREATE A FUNCTION TO COMPUTE THE ARITHMETIC AVERAGE ON THE 'reserve' FEILED/VARIABLE, USING ALL DOCUMENTS FOUND BETWEEN SPECIFIED START AND END TIMESTAMPS. RETURNS A LIST WITH A SINGLE OBJECT INSIDE
-    
+    def aggregate_avg_reserve(self,start,end): 
+        try:
+            start = int(start)
+            end = int(end)
+            remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result      = list(remotedb.ELET2415.radar.aggregate([ { '$match': { 'timestamp': { '$gte': start, '$lte': end } } }, { '$group': { '_id': None, 'average': { '$avg': '$reserve' } } }, { '$project': { '_id': 0 } } ]))
+        except Exception as e:
+            msg = str(e)
+            print("calculate_avg_reserve ",msg)            
+        finally:                  
+            return result
     
     # 4. CREATE A FUNCTION THAT INSERT/UPDATE A SINGLE DOCUMENT IN THE 'code' COLLECTION WITH THE PROVIDED PASSCODE
-   
+    def update_passcode(self, passcode):
+        try:
+            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            result = remotedb.ELET2415.code.find_one_and_update({"type":"passcode"},{'$set': {"type":"passcode","code":code}},{'_id':0},upsert=True)
+        except Exception as e:
+            msg = str(e)
+            print("Failed to update: ",msg)      
+        finally:
+            return result    
     
     # 5. CREATE A FUNCTION THAT RETURNS A COUNT, OF THE NUMBER OF DOCUMENTS FOUND IN THE 'code' COLLECTION WHERE THE 'code' FEILD EQUALS TO THE PROVIDED PASSCODE.
     #    REMEMBER, THE SCHEMA FOR THE SINGLE DOCUMENT IN THE 'code' COLLECTION IS {"type":"passcode","code":"0070"}
-
-
+    def check_code_count(self,passcode):
+        try:
+            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
+            count = remotedb.ELET2415.code.count_documents({'code': passcode})
+        except Exception as e:
+            msg = str(e)
+            print("checkPwd Error: ", msg)
+        finally:
+            return count
    
 
 
