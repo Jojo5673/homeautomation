@@ -8,7 +8,7 @@
    
 //**********ENTER IP ADDRESS OF SERVER******************//
 
-#define HOST_IP     "localhost"       // REPLACE WITH IP ADDRESS OF SERVER ( IP ADDRESS OF COMPUTER THE BACKEND IS RUNNING ON) 
+#define HOST_IP     "172.16.192.204"       // REPLACE WITH IP ADDRESS OF SERVER ( IP ADDRESS OF COMPUTER THE BACKEND IS RUNNING ON) 
 #define HOST_PORT   "8080"            // REPLACE WITH SERVER PORT (BACKEND FLASK API PORT)
 #define route       "api/update"      // LEAVE UNCHANGED 
 #define idNumber    "620172690"       // REPLACE WITH YOUR ID NUMBER 
@@ -22,8 +22,8 @@
 //**********PIN DEFINITIONS******************//
 
  
-#define espRX         10
-#define espTX         11
+#define espRX         11
+#define espTX         10
 #define espTimeout_ms 300
 
 #define trigPin 3
@@ -54,7 +54,7 @@ void setup(){
 void loop(){ 
    
   // send updates with schema ‘{"id": "student_id", "type": "ultrasonic", "radar": 0, "waterheight": 0, "reserve": 0, "percentage": 0}’
-  double distance = sonar.ping_in() - 16.737;
+  double distance = sonar.ping_in();
   Serial.println(distance);
   double height = depth - distance;
   double radius = diameter/2.0;
@@ -72,7 +72,6 @@ void loop(){
   doc["percentage"] = percent;
 
   serializeJson(doc, json_data);
-  Serial.println(json_data);
   espUpdate(json_data);
   delay(1000);  
 }
@@ -129,5 +128,3 @@ void espInit(){
 }
 
 //***** Design and implement all util functions below ******
- 
-
