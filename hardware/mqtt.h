@@ -91,7 +91,7 @@ void MQTT_ConnectFunction( void ) {
   xReturned = xTaskCreatePinnedToCore(
                 MQTT_Connect,     /* Function that implements the task. */
                 "MQTT CONNECT",    /* Text name for the task. */
-                2048,                     /* Stack size (Bytes in ESP32, words in Vanilla FreeRTOS) */
+                4096,                     /* Stack size (Bytes in ESP32, words in Vanilla FreeRTOS) */
                 ( void * ) 1,             /* Parameter passed into the task. */
                 8,                        /* Priority at which the task is created. */
                 &xMQTT_Connect,    /* Used to pass out the created task's handle. */
@@ -179,23 +179,19 @@ void checkHEAP(const char* Name){
 
 
 void initialize(void){
-  
-  
+  vNTPFunction();     // INIT NTP PROTOCOL FOR TIME KEEPING   
+
   //CONNECT TO WIFI
-  Serial.printf("\nConnecting to %s \n", ssid);
-  WiFi.begin(ssid, password); 
+  Serial.printf("Connecting to %s \n", ssid);
+  WiFi.begin(ssid, password);
+  
   while (WiFi.status() != WL_CONNECTED) {
       vTaskDelay(1000 / portTICK_PERIOD_MS); 
       Serial.print(".");
   }
 
-  // Your Domain name with URL path or IP address with path
-  // http.begin(espClient, serverName);
-  Serial.println(WiFi.localIP());
-
   Serial.println("\n\n***** Wi-Fi CONNECTED! *****\n\n");
-
-  vNTPFunction();     // INIT NTP PROTOCOL FOR TIME KEEPING      
+   
   initMQTT();          // INIT MQTT  
   vUpdateFunction();
   
@@ -272,7 +268,7 @@ void vUpdateFunction( void ) {
     xReturned = xTaskCreatePinnedToCore(
                     vUpdate,               // Function that implements the task. 
                     "vUpdate",    // Text name for the task. 
-                    8096,               // Stack size (Bytes in ESP32, words in Vanilla FreeRTOS) 4096
+                    4096,               // Stack size (Bytes in ESP32, words in Vanilla FreeRTOS) 
                     ( void * ) 1,       // Parameter passed into the task. 
                     6,                  // Priority at which the task is created. 
                     &xUpdateHandle,        // Used to pass out the created task's handle. 
