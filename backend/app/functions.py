@@ -94,13 +94,26 @@ class DB:
     # 4. CREATE A FUNCTION THAT INSERT/UPDATE A SINGLE DOCUMENT IN THE 'code' COLLECTION WITH THE PROVIDED PASSCODE
     def update_passcode(self, passcode):
         try:
-            remotedb = self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
-            result = remotedb.ELET2415.code.find_one_and_update({"type":"passcode"},{'$set': {"type":"passcode","code":code}},{'_id':0},upsert=True)
+            remotedb = self.remoteMongo(
+                f'mongodb://{self.username}:{self.password}@{self.server}:{self.port}',
+                tls=self.tls
+            )
+
+            result = remotedb.ELET2415.code.find_one_and_update(
+                {"type": "passcode"},
+                {
+                    "$set": {"code": passcode},
+                    "$setOnInsert": {"type": "passcode"}
+                },
+                upsert=True,
+                return_document=self.ReturnDocument.AFTER
+            )
+             
+            return result
+
         except Exception as e:
-            msg = str(e)
-            print("Failed to update: ",msg)      
-        finally:
-            return result    
+            print("Failed to update:", str(e))
+            return None
     
     # 5. CREATE A FUNCTION THAT RETURNS A COUNT, OF THE NUMBER OF DOCUMENTS FOUND IN THE 'code' COLLECTION WHERE THE 'code' FEILD EQUALS TO THE PROVIDED PASSCODE.
     #    REMEMBER, THE SCHEMA FOR THE SINGLE DOCUMENT IN THE 'code' COLLECTION IS {"type":"passcode","code":"0070"}

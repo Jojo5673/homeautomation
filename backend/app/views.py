@@ -7,6 +7,7 @@ This file creates your application.
 
 # from crypt import methods
 import site 
+import re
 
 from app import app, Config,  mongo, Mqtt
 from flask import escape, render_template, request, jsonify, send_file, redirect, make_response, send_from_directory 
@@ -22,18 +23,19 @@ from math import floor
 #   Routing for your application    #
 #####################################
 
+def _valid_passcode(passcode):
+    return isinstance(passcode, str) and re.fullmatch(r"\d{4}", passcode) is not None
+
 # 1. CREATE ROUTE FOR '/api/set/combination'
 @app.route('/api/set/combination', methods=['POST'])
 def set_combination():
     if request.method == 'POST':
         try:
-            form = request.form
-            passcode = (form.get("passcode") or "").strip()
+            passcode = (request.json.get("passcode") or "").strip()
             print(passcode)
-            passcodeInt = int(passcode)
             
-            if  len(passcode) == 4 and type(passcodeInt) == int :
-                return jsonify({"status": "failed", "data": "Invalid passcode format"})
+            if not _valid_passcode(passcode):
+                return jsonify({"status":"failed","data":"failed"})
             
             success = mongo.update_passcode(passcode)   
             if success:
@@ -41,7 +43,8 @@ def set_combination():
             else:
                 return jsonify({"status": "failed", "data": "failed"})
         except Exception as e:
-            print(f"set_combination error: f{str(e)}") 
+            print(f"set_combination error: {str(e)}") 
+            return jsonify({"status": "failed", "data": "failed"})
     
 # 2. CREATE ROUTE FOR '/api/check/combination'
 @app.route('/api/check/combination', methods=['POST'])
